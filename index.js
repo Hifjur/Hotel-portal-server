@@ -7,7 +7,7 @@ const { query } = require("express");
 const admin = require("firebase-admin");
 const port = process.env.PORT || 5000;
 const ObjectId = require("mongodb").ObjectId;
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 //jwt verification
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
@@ -76,18 +76,36 @@ async function run() {
     app.get("/hotels/:_id", async (req, res) => {
       const _id = req.params._id;
       const query = { _id: ObjectId(_id) };
-      const bike = await hotelsCollection.findOne(query);
-      res.json(bike);
+      const hotel = await hotelsCollection.findOne(query);
+      res.json(hotel);
     });
 
     app.get("/bookings", verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const cursor = bookingCollection.find(query);
-      const orders = await cursor.toArray();
-      res.json(orders);
+      const result = await cursor.toArray();
+      res.json(result);
     });
+    app.get("/bookings/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const booking = await bookingCollection.findOne(query);
 
+      res.json(booking);
+    });
+    app.put("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          payment: payment,
+        },
+      };
+      const result = await bookingCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    });
     //delete using auto generated unique order id. customer cant see orders from emails, meaning has no access to oderId that was not created by the email.
     app.delete("/bookings", verifyToken, async (req, res) => {
       const id = req.body;
@@ -107,7 +125,7 @@ async function run() {
 
       console.log(orderId);
       const filter = { orderId: orderId.orderId };
-      const updateDoc = { $set: { status: "shipped" } };
+      const updateDoc = { $set: { status: "Confirmed" } };
       const result = await bookingCollection.updateOne(filter, updateDoc);
       res.json(result);
     });
@@ -142,6 +160,17 @@ async function run() {
         options
       );
       res.json(result);
+    });
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const paymentInfo = req.body;
+      const amount = paymentInfo.rent * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      res.json({ clientSecret: paymentIntent.client_secret });
     });
 
     app.put("/users/admin", verifyToken, async (req, res) => {
