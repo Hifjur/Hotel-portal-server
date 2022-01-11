@@ -114,8 +114,8 @@ async function run() {
       const result = await bookingCollection.deleteOne(query);
       res.json(result);
     });
-
-    app.get("/bookings/admin", verifyToken, async (req, res) => {
+    // verifyToken,
+    app.get("/bookings/admin", async (req, res) => {
       const cursor = bookingCollection.find();
       const orders = await cursor.toArray();
       res.json(orders);
