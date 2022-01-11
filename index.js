@@ -32,7 +32,9 @@ async function verifyToken(req, res, next) {
     try {
       const decodedUser = await admin.auth().verifyIdToken(token);
       req.decodedEmail = decodedUser.email;
-    } catch (error) {}
+    } catch (error) {
+      
+    }
   }
   next();
 }
@@ -114,8 +116,8 @@ async function run() {
       const result = await bookingCollection.deleteOne(query);
       res.json(result);
     });
-    // verifyToken,
-    app.get("/bookings/admin", async (req, res) => {
+    // 
+    app.get("/bookings/admin", verifyToken, async (req, res) => {
       const cursor = bookingCollection.find();
       const orders = await cursor.toArray();
       res.json(orders);
