@@ -53,6 +53,12 @@ async function run() {
       res.json(hotels);
     });
 
+    app.get("/allbookins", async (req, res) => {
+      const cursor = bookingCollection.find();
+      const bookings = await cursor.toArray();
+      res.json(bookings);
+    });
+
     app.post("/hotels", async (req, res) => {
       const hotels = req.body;
       const result = await hotelsCollection.insertOne(hotels);
