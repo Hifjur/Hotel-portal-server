@@ -117,8 +117,8 @@ async function run() {
     //delete using auto generated unique order id. customer cant see orders from emails, meaning has no access to oderId that was not created by the email.
     app.delete("/bookings", verifyToken, async (req, res) => {
       const id = req.body;
-      console.log("delete", id);
-      const query = { orderId: id.orderId };
+      console.log("delete", id._id);
+      const query = { _id: ObjectId(id._id) };
       const result = await bookingCollection.deleteOne(query);
       res.json(result);
     });
@@ -132,9 +132,10 @@ async function run() {
       const orderId = req.body;
 
       console.log(orderId);
-      const filter = { orderId: orderId.orderId };
+      const query = { _id: ObjectId(orderId._id) };
+      console.log(query);
       const updateDoc = { $set: { status: "Confirmed" } };
-      const result = await bookingCollection.updateOne(filter, updateDoc);
+      const result = await bookingCollection.updateOne(query, updateDoc);
       res.json(result);
     });
 
